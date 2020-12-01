@@ -1,4 +1,4 @@
-#ifndef RPC_DECODE_H
+    #ifndef RPC_DECODE_H
 #define RPC_DECODE_H
 
 #include <array>

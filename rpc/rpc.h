@@ -26,12 +26,18 @@ public:
                                                                      curl{} {}
 
     /* Work with files */
+    int check_file_exist(const std::string &path);
 
     int create_file(const std::string &path);
 
     int write_file(const std::string &path, const uint8_t *data, size_t length);
 
-    int read_file(const std::string &path, uint8_t *buf, size_t buf_size, off_t offset);
+    int write_file(const std::string &path, const uint8_t *data, size_t length, off_t offset);
+
+    int rename_file(const std::string& old_path, const std::string& new_path);
+
+    int read_file(const std::string &path, uint8_t *buf,
+                  size_t buf_size, off_t offset) ;
 
     ssize_t get_file_size(const std::string &path);
 

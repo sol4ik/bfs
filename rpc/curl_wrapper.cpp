@@ -1,5 +1,7 @@
 #include "curl_wrapper.h"
 
+//#define HOST_IP 192.168.0.103
+//const std::string host_ip = "192.168.0.103";
 Curl::Curl() {
     curl = curl_easy_init();
     if (!curl)
@@ -7,6 +9,7 @@ Curl::Curl() {
     headers = curl_slist_append(headers, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_URL, "http:/""/localhost:8545");
+//    curl_easy_setopt(curl, CURLOPT_URL, "http:/""/192.168.0.103:8545");
 }
 
 std::string Curl::send_request(const std::string &json) {

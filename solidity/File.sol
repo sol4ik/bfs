@@ -6,22 +6,27 @@ pragma experimental ABIEncoderV2;
 
 contract File {
     byte[] _data;
-    uint256 size;
-    FileStat.stat public entry_stat; 
-    
+    FileStat.stat public entry_stat;
+
     function read() view public returns(byte[] memory){
         entry_stat.atime = now;
         return _data;
     }
-    
+
     constructor() public {
         uint time = now;
         entry_stat.atime = time;
         entry_stat.mtime = time;
         entry_stat.ctime = time;
-        entry_stat.mode = (100000 | 770);
+        // entry_stat.mode = (100000 | 770);
+        entry_stat.mode = 33204;
     }
-    
+
+    function update_mtime() public
+    {
+        entry_stat.mtime = now;
+    }
+
     function bytesToBytes32(uint offset) public returns (bytes32) {
         bytes32 out;
 
@@ -30,7 +35,7 @@ contract File {
         }
         return out;
     }
-    
+
     function write(byte[] memory data) public {
         uint time = now;
         entry_stat.atime = time;
@@ -38,22 +43,30 @@ contract File {
         _data = data;
         entry_stat.size = data.length;
     }
-    
+
     function write(byte[] memory data, uint off_t) public {
-        for(uint i = off_t; i < data.length; i++){
-            _data[i] = data[i];
+        byte[] memory new_data = new byte[](data.length + off_t);
+        for(uint i = 0; i < off_t; i++){
+            new_data[i] = _data[i];
         }
+        i = off_t;
+        for(uint j = 0; j < data.length; j++){
+            new_data[i++] = data[j];
+        }
+        _data = new_data;
+        // delete new_data;
         uint time = now;
         entry_stat.atime = time;
         entry_stat.mtime = time;
-        entry_stat.size = _data.length;
+        entry_stat.size = off_t + data.length;
     }
-    
+
     function get_file_size() view public returns(uint256){
         return entry_stat.size;
     }
-    
+
     function get_stat() public returns(FileStat.stat){
         return entry_stat;
     }
+
 }

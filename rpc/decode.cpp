@@ -20,16 +20,21 @@ bytes from_hex(const std::string &str) {
 
 byte decode_byte(const std::string &str) {
     int padding = 0;
-    while (str[str.length() - 1 - padding++] == '0') {}
+    while (str[str.length() - 1 - (padding++)] == '0') {
+//    	++padding;
+    }
     if (padding % 2 != 0)
         --padding;
     if (padding != 64)
-        return from_hex(str.substr(0, str.length() - padding))[0];
+	{
+		return from_hex(str.substr(0, str.length() - padding))[0];
+	}
     else
         return 0x00;
 }
 
 bytes decode_bytes(const std::string &str) {
+	std::cout << str << std::endl;
     bytes res;
     for (size_t i = 2 + 64 + 64; i < str.length(); i += 64) {
         res.push_back(decode_byte(str.substr(i, 64)));
@@ -44,7 +49,6 @@ uint64_t decode_uint256(const std::string &str) {
     ss >> res;
     return res;
 }
-
 std::string decode_string(const std::string &str) {
     size_t len = decode_uint256(str.substr(0, 64));
     int padding = 0;
