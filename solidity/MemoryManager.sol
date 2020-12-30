@@ -7,7 +7,7 @@ import './Directory.sol';
 contract MemoryManager{
     DirectoryFactory fact = new DirectoryFactory();
     Directory root_directory = new Directory("/", "/", fact);
-    
+
     function split_into_array(string memory path) public returns(string[]){
         bytes memory path_bytes = bytes(path);
         require(path_bytes[0] == '/', "Only absolute pathes");
@@ -15,9 +15,9 @@ contract MemoryManager{
         for(uint k = 0; k < path_bytes.length; k++)
             if(path_bytes[k] == '/')
                 cnt++;
-        
+
         var parts = new string[](cnt);
-        
+
         uint prev = 1;
         uint str_num = 0;
         for(uint i = 1; i < path_bytes.length; i++) {
@@ -40,13 +40,13 @@ contract MemoryManager{
         }
         return parts;
     }
-    
+
     function find_file(string path) public returns(Directory, string memory){
         string[] memory next_dirs = split_into_array(path);
         Directory current_dir = root_directory;
         if(next_dirs.length > 0) {
             string memory file_name = next_dirs[next_dirs.length - 1];
-            
+
             for(uint i = 0; i < next_dirs.length - 1; i++){
                 require(current_dir.find(next_dirs[i]) != -1, "No such directory in path");
                 current_dir = current_dir.get_dir_by_name(next_dirs[i]);
@@ -57,74 +57,96 @@ contract MemoryManager{
             return (current_dir, filename);
         }
     }
-    
+
     function create_file(string memory path) public returns(string[] memory){
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) == -1, "Such file exists");
         current_dir.create_file(file_name);
         return current_dir.list_dir();
     }
-    
+
+    function rename_file(string memory old_path, string memory new_path) view public {
+        // if (Directory.equal(old_path, new_path) == false) {
+        var (old_dir, old_file_name) = find_file(old_path);
+        // create_file(new_path);
+        var (new_dir, new_file_name) = find_file(new_path);
+        // if (new_dir.is_file(new_file_name) == true) {
+        new_dir.append_file(old_dir.get_file_by_name(old_file_name), new_file_name);
+        old_dir.removeByValue(old_file_name);
+        // } else {
+        //     new_dir.get_dir_by_name(new_file_name).append_file(old_dir.get_file_by_name(old_file_name), old_file_name);
+        //     old_dir.removeByValue(old_file_name);
+        // }
+
+        // }
+
+    }
+
     function write(string memory path, byte[] memory data) public {
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         require(current_dir.is_file(file_name) == true, "Is a directory");
         current_dir.file_write(file_name, data);
     }
-    
-    function write(string memory path, byte[] memory data, uint off_t) public {
+
+    function write1(string memory path, byte[] memory data, uint off_t) public {
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         require(current_dir.is_file(file_name) == true, "Is a directory");
         current_dir.file_write(file_name, data, off_t);
     }
-    
+
+    function check_file_exist(string memory path) view public returns(bool) {
+        var (current_dir, file_name) = find_file(path);
+        return current_dir.find(file_name) != -1;
+    }
+
     function read(string memory path) view public returns(byte[] memory){
-         var (current_dir, file_name) = find_file(path);
-         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
-         require(current_dir.is_file(file_name) == true, "Is a directory");
-         return current_dir.file_read(file_name);
+        var (current_dir, file_name) = find_file(path);
+        require(current_dir.find(file_name) != -1, "Such file doesn't exist");
+        require(current_dir.is_file(file_name) == true, "Is a directory");
+        return current_dir.file_read(file_name);
     }
-    
+
     function read(string memory path, uint256 off_t) view public returns(bytes32){
-         var (current_dir, file_name) = find_file(path);
-         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
-         require(current_dir.is_file(file_name) == true, "Is a directory");
-         return current_dir.file_read(file_name, off_t);
+        var (current_dir, file_name) = find_file(path);
+        require(current_dir.find(file_name) != -1, "Such file doesn't exist");
+        require(current_dir.is_file(file_name) == true, "Is a directory");
+        return current_dir.file_read(file_name, off_t);
     }
-    
+
     function make_directory(string path) public returns(string[] memory){
         var (current_dir, dir_name) = find_file(path);
         require(current_dir.find(dir_name) == -1, "Such file exists");
         current_dir.create_directory(dir_name);
         return current_dir.list_dir();
     }
-    
+
     function get_file_size(string memory path) public returns(uint256) {
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         return current_dir.get_file_size(file_name);
     }
-    
+
     function delete_file(string memory path) public {
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         current_dir.delete_file(file_name);
     }
-    
+
     function delete_directory(string memory path) public {
         var (current_dir, dir_name) = find_file(path);
         require(current_dir.find(dir_name) != -1, "Such directory doesn't exist");
         current_dir.delete_dir(dir_name);
     }
-    
+
     function list_dir(string memory path) view public returns(string[] memory){
         var (current_dir, dir_name) = find_file(path);
         return current_dir.list_dir();
     }
-    
+
     function get_stat(string memory path) view public returns(FileStat.stat){
-        var (current_dir, file_name) = find_file(path); 
+        var (current_dir, file_name) = find_file(path);
         if(current_dir.is_file(file_name))
             return current_dir.get_stat_file(file_name);
         else

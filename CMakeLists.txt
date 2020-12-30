@@ -14,6 +14,11 @@ include_directories(${Boost_INCLUDE_DIR} ${CRYPTOPP_INCLUDE_DIR} ${CURL_INCLUDE_
 add_library(rpc-library rpc/rpc.h rpc/encode.h rpc/encode.cpp rpc/curl_wrapper.cpp rpc/curl_wrapper.h rpc/decode.cpp rpc/decode.h)
 target_link_libraries(rpc-library LINK_PUBLIC ${Boost_LIBRARIES} ${CRYPTOPP_LIBRARIES} ${CURL_LIBRARIES})
 
+#add_executable(example
+#    example.cpp rpc/rpc.cpp stupid_filesystem.cpp
+#    rpc/directory.cpp rpc/directory.h file.h file.cpp
+#    directory.h)
+#target_link_libraries(example ${FUSE_LIBRARIES})
 add_executable(test-rpc rpc/main.cpp)
 target_link_libraries(test-rpc LINK_PUBLIC rpc-library)
 

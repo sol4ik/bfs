@@ -42,6 +42,8 @@ bytes encode(const std::string &func, Args... args) {
             params.emplace_back(encode(std::any_cast<std::string>(values[param_count])));
         } else if (word == "bytes1[]") {
             params.emplace_back(encode(std::any_cast<bytes>(values[param_count])));
+        } else if (word == "uint256") {
+            params.emplace_back(encode(std::any_cast<uint64_t>(values[param_count])));
         }
         param_count++;
     }
