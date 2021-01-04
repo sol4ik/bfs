@@ -58,6 +58,7 @@ std::string decode_string(const std::string &str) {
     std::string res;
     for (size_t i = 64; i < str.length() - padding; i += 2)
         res += decode_byte(str.substr(i, 2));
+
     return boost::locale::conv::from_utf(res, "UTF-8");
 }
 

@@ -8,7 +8,7 @@ contract MemoryManager{
     DirectoryFactory fact = new DirectoryFactory();
     Directory root_directory = new Directory("/", "/", fact);
 
-    function split_into_array(string memory path) public returns(string[]){
+    function split_into_array(string memory path) public view returns(string[]){
         bytes memory path_bytes = bytes(path);
         require(path_bytes[0] == '/', "Only absolute pathes");
         uint cnt = 0;
@@ -41,7 +41,7 @@ contract MemoryManager{
         return parts;
     }
 
-    function find_file(string path) public returns(Directory, string memory){
+    function find_file(string path) public view returns(Directory, string memory){
         string[] memory next_dirs = split_into_array(path);
         Directory current_dir = root_directory;
         if(next_dirs.length > 0) {
@@ -60,36 +60,29 @@ contract MemoryManager{
 
     function create_file(string memory path) public returns(string[] memory){
         var (current_dir, file_name) = find_file(path);
-        require(current_dir.find(file_name) == -1, "Such file exists");
+        require(current_dir.find_file(file_name) == -1, "Such file exists");
         current_dir.create_file(file_name);
         return current_dir.list_dir();
     }
 
-    function rename_file(string memory old_path, string memory new_path) view public {
+    function rename_file(string memory old_path, string memory new_path) public {
         // if (Directory.equal(old_path, new_path) == false) {
         var (old_dir, old_file_name) = find_file(old_path);
-        // create_file(new_path);
+        require(old_dir.find_file(old_file_name) != -1, "Such doesn't file exist");
         var (new_dir, new_file_name) = find_file(new_path);
-        // if (new_dir.is_file(new_file_name) == true) {
         new_dir.append_file(old_dir.get_file_by_name(old_file_name), new_file_name);
-        old_dir.removeByValue(old_file_name);
-        // } else {
-        //     new_dir.get_dir_by_name(new_file_name).append_file(old_dir.get_file_by_name(old_file_name), old_file_name);
-        //     old_dir.removeByValue(old_file_name);
-        // }
-
-        // }
+        old_dir.remove_file_by_value(old_file_name);
 
     }
 
-    function write(string memory path, byte[] memory data) public {
+    function write(string memory path, bytes memory data) public {
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         require(current_dir.is_file(file_name) == true, "Is a directory");
         current_dir.file_write(file_name, data);
     }
 
-    function write1(string memory path, byte[] memory data, uint off_t) public {
+    function write(string memory path, bytes memory data, uint off_t) public {
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         require(current_dir.is_file(file_name) == true, "Is a directory");
@@ -101,14 +94,14 @@ contract MemoryManager{
         return current_dir.find(file_name) != -1;
     }
 
-    function read(string memory path) view public returns(byte[] memory){
+    function read(string memory path) view public returns(bytes memory){
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         require(current_dir.is_file(file_name) == true, "Is a directory");
         return current_dir.file_read(file_name);
     }
 
-    function read(string memory path, uint256 off_t) view public returns(bytes32){
+    function read(string memory path, uint256 off_t) view public returns(bytes){
         var (current_dir, file_name) = find_file(path);
         require(current_dir.find(file_name) != -1, "Such file doesn't exist");
         require(current_dir.is_file(file_name) == true, "Is a directory");

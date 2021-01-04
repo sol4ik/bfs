@@ -38,7 +38,7 @@ contract Directory {
     /// @dev Does a byte-by-byte lexicographical comparison of two strings.
     /// @return a negative number if `_a` is smaller, zero if they are equal
     /// and a positive numbe if `_b` is smaller.
-    function compare(string _a, string _b) returns (int) {
+    function compare(string _a, string _b) view returns (int) {
         bytes memory a = bytes(_a);
         bytes memory b = bytes(_b);
         uint minLength = a.length;
@@ -57,11 +57,11 @@ contract Directory {
             return 0;
     }
     /// @dev Compares two strings and returns true iff they are equal.
-    function equal(string _a, string _b) public returns (bool) {
+    function equal(string _a, string _b) public view returns (bool) {
         return compare(_a, _b) == 0;
     }
     /// @dev Finds the index of the first occurrence of _needle in _haystack
-    function indexOf(string _haystack, string _needle) returns (int)
+    function indexOf(string _haystack, string _needle) view returns (int)
     {
         bytes memory h = bytes(_haystack);
         bytes memory n = bytes(_needle);
@@ -88,49 +88,61 @@ contract Directory {
             return -1;
         }
     }
-    function find(string value) returns(int) {
-        uint i = 0;
-        while (i < dir_list.length) {
+
+    function find_file(string value) returns (int) {
+        for (uint i = 0; i < file_list.length; ++i) {
+            if(equal(file_list[i], value) == true) {
+                return int(i);
+            }
+        }
+        return -1;
+    }
+
+    function find_dir(string value ) returns (int) {
+        for (uint i = 0; i < dir_list.length; ++i) {
             if(equal(dir_list[i], value) == true) {
                 return int(i);
             }
-            i++;
         }
-        i = 0;
-        while (i < file_list.length) {
-            if(equal(file_list[i], value) == true) {
-                return int(i + dir_list.length);
+        return -1;
+    }
+
+    function find(string value) view returns(int) {
+        for (uint i = 0; i < dir_list.length; ++i) {
+            if(equal(dir_list[i], value) == true) {
+                return int(i);
             }
-            i++;
+        }
+        for (uint j = 0; j < file_list.length; ++j) {
+            if(equal(file_list[j], value) == true) {
+                return int(j + dir_list.length);
+            }
         }
         return -1;
 
     }
 
-    function is_file(string filename) returns(bool) {
-        int i = find(filename);
-        if(i == -1)
-            return false;
-        if(uint(i) < dir_list.length)
-            return false;
-        else
-            return true;
+    function is_file(string filename) view returns(bool) {
+        return find_file(filename) != -1;
     }
 
-    function removeByIndex(uint i) {
-        if(uint(i) < dir_list.length) {
-            while (i<dir_list.length-1) {
-                dir_list[i] = dir_list[i+1];
-                i++;
-            }
-            dir_list.length--;
-        } else {
-            while(uint(i) - dir_list.length < file_list.length-1) {
-                file_list[i - dir_list.length] = file_list[i+1 - dir_list.length];
-                i++;
-            }
-            file_list.length--;
+    function remove_file_by_index(uint i) {
+        while (i < file_list.length-1) {
+            file_list[i] = file_list[i+1];
+            i++;
         }
+
+        delete file_list[file_list.length-1];
+        file_list.length--;
+    }
+
+    function remove_dir_by_index(uint i) {
+        while (i < dir_list.length-1) {
+            dir_list[i] = dir_list[i+1];
+            i++;
+        }
+        delete dir_list[dir_list.length-1];
+        dir_list.length--;
     }
 
     function create_file(string _name) public {
@@ -138,34 +150,43 @@ contract Directory {
         files[_name] = new File();
     }
 
-    function removeByValue(string value) public {
-        int i = find(value);
+    function remove_dir_by_value(string value) public {
+        int i = find_dir(value);
         if(i != -1) {
-            if(uint(i) < dir_list.length)
-                removeByIndex(uint(i));
-            else
-                removeByIndex(uint(i) - dir_list.length);
+            remove_dir_by_index(uint(i));
         }
     }
 
-    function file_write(string _file_name, byte[] _data) public {
+    function remove_file_by_value(string value) public {
+        int i = find_file(value);
+        if(i != -1) {
+            remove_file_by_index(uint(i));
+        }
+    }
+
+    function file_write(string _file_name, bytes _data) public {
         files[_file_name].write(_data);
     }
 
-    function file_write(string _file_name, byte[] _data, uint off_t) public {
+    function file_write(string _file_name, bytes _data, uint off_t) public {
         files[_file_name].write(_data, off_t);
     }
 
-    function file_read(string _file_name) view public returns(byte[] memory){
+    function file_read(string _file_name) view public returns(bytes memory){
         return files[_file_name].read();
     }
 
-    function file_read(string _file_name, uint off_t) view public returns(bytes32){
-        return files[_file_name].bytesToBytes32(off_t);
+    function file_read(string _file_name, uint off_t) view public returns(bytes memory){
+        bytes memory x = files[_file_name].read();
+        bytes memory returned_x = new bytes(x.length - off_t);
+        for (uint i = 0; i < x.length - off_t; ++i) {
+            returned_x[i] = x[off_t + i];
+        }
+        return returned_x;
     }
 
 
-    function list_dir() public returns(string[]){
+    function list_dir() public view returns(string[]){
         string[] memory files = new string[](dir_list.length + file_list.length);
         for(uint i = 0; i < file_list.length; i++)
             files[i] = file_list[i];
@@ -193,12 +214,12 @@ contract Directory {
 
     function delete_file(string _name) public {
         delete files[_name];
-        removeByValue(_name);
+        remove_file_by_value(_name);
     }
 
     function delete_dir(string _name) public {
         delete directories[_name];
-        removeByValue(_name);
+        remove_dir_by_value(_name);
     }
 
     function get_stat_dir() public returns(FileStat.stat){
@@ -210,8 +231,8 @@ contract Directory {
     }
 
     function append_file(File file, string new_name) public {
+        file_list.push(new_name);
         files[new_name] = file;
         files[new_name].update_mtime();
-        file_list.push(new_name);
     }
 }

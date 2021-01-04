@@ -16,49 +16,52 @@ typedef std::vector<byte> bytes;
 
 bytes from_hex(const std::string &str);
 
-bytes get_method_id(const std::string &msg);
+std::string get_method_id(const std::string &msg);
 
-bytes encode(uint64_t num);
+std::string encode(uint64_t num, size_t pad = 32);
 
-bytes encode(const std::string &str);
+std::string encode(const std::string &str, size_t pad = 32);
 
-bytes encode(const bytes &bytes);
+std::string encode(const bytes &bytes);
 
 template<typename... Args>
-bytes encode(const std::string &func, Args... args) {
-    auto res = get_method_id(func);
+std::string main_encode(const std::string &func, Args... args) {
+	std::string code = get_method_id(func), word, data;
     std::stringstream ss{func};
 
-    std::string word;
     std::getline(ss, word, '(');
+    std::vector<std::any> params{args...};
+	size_t params_n = params.size(), offset = 32 * params.size();
 
-    int param_count = 0;
-    std::vector<std::any> values{args...};
-    std::vector<bytes> params;
+    std::vector<std::string> words;
     while (std::getline(ss, word, ',')) {
         if (word[word.size() - 1] == ')')
             word = word.substr(0, word.size() - 1);
-        if (word == "string") {
-            params.emplace_back(encode(std::any_cast<std::string>(values[param_count])));
-        } else if (word == "bytes1[]") {
-            params.emplace_back(encode(std::any_cast<bytes>(values[param_count])));
-        } else if (word == "uint256") {
-            params.emplace_back(encode(std::any_cast<uint64_t>(values[param_count])));
-        }
-        param_count++;
+        words.push_back(word);
     }
 
-    for (int i = 0; i < params.size(); i++) {
-        auto tmp = encode(param_count * 32 + (i >= 1 ? params[i - 1].size() : 0));
-        for (auto j: tmp)
-            res.push_back(j);
+    for (size_t i = 0; i < params_n; ++i) {
+		std::string param_code;
+		if (words[i] == "string" || words[i] == "bytes") {
+			param_code += encode(std::any_cast<std::string>(params[i]));
+			data += param_code;
+			code += encode(offset);
+			offset += param_code.size() / 2;
+		}
+		else if (words[i] == "uint256" || words[i] == "uint") {
+			code += encode(std::any_cast<std::uint64_t>(params[i]));
+		}
+
+//        else if (words[i] == "bytes") {
+//            param_code += encode(std::any_cast<std::string>(params[i]));
+//            data += param_code;
+//            code += encode(offset);
+//            offset += param_code.size() / 2;
+//        }
     }
-    for (auto &i: params)
-        for (auto &j: i)
-            res.push_back(j);
-    return res;
+	return "0x" + code + data;
 }
 
-std::string to_string(const bytes &data);
+std::string to_string(const bytes &data, bool flag = true);
 
 #endif //RPC_ENCODE_H

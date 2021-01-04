@@ -7,24 +7,24 @@ static Rpc *RPC = nullptr;
 
 int bfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *) {
     std::cout << "[DEBUG] READ" << path << std::endl;
-    int status = RPC->read_file(path, reinterpret_cast<uint8_t *>(buf), size, offset);
+    int status = RPC->read_file(path, buf, size, offset);
     return status;
 }
 
 int bfs_write(const char *path, const char *data, size_t size, off_t offset, struct fuse_file_info *) {
 //    std::cout << offset - 1 << std::endl;
-    if (RPC->write_file(path, reinterpret_cast<const uint8_t *>(data), size)) // TODO: Add offset
-        return size;
-//    if (offset == 0) {
-//        if (RPC->write_file(path, reinterpret_cast<const uint8_t *>(data), size)) // TODO: Add offset
-//            return size;
-//    } else {
-//        int x = RPC->write_file(path, reinterpret_cast<const uint8_t *>(data), size,
-//                                offset);
-//        std::cout << x << std::endl;
-//        if (x) // TODO: Add offset
-//            return size - 1;
-//    }
+//    if (RPC->write_file(path, reinterpret_cast<const uint8_t *>(data), size)) // TODO: Add offset
+//        return size;
+    if (offset == 0) {
+        if (RPC->write_file(path, std::string(data, size), size)) // TODO: Add offset
+            return size;
+    } else {
+        int x = RPC->write_file(path, std::string(data, size), size,
+                                offset);
+        std::cout << x << std::endl;
+        if (x)
+            return static_cast<int>(size - 1);
+    }
 
     return 0;
 }
@@ -121,7 +121,7 @@ int bfs_rmdir(const char *path) {
     return status == 1 ? 0 : -1;
 }
 
-int bfs_tuncate (const char* path , off_t t) {
+int bfs_truncate (const char* path , off_t t) {
     std::cout << "[DEBUG] Truncated!" << std::endl;
     return 0;
 }
@@ -235,7 +235,7 @@ struct fuse_operations bfs_operations = {
         .unlink = bfs_unlink,
         .rmdir = bfs_rmdir,
         .rename = bfs_rename,
-        .truncate = bfs_tuncate,
+        .truncate = bfs_truncate,
 
         .open = bfs_open, // We don`t need to open a file in BFS
 
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
 //    }
 
 //    RPC = new Rpc{argv[3], argv[4]};
-    RPC = new Rpc{"0x008e6eE68F12915C079ede4E55b8DE4Fdbb995f8",
-        "0x1f864C8e389F3960EDFFf45EaA80B5F329714f24"};
+    RPC = new Rpc{"0x001F6044daa380e5C9dBbB0807AcE1EA9Cf3B10B",
+        "0xF239f04552720D17477685a9Ab988402E9BCaCA0"};
     return fuse_main(argc, argv, &bfs_operations, nullptr);
 }

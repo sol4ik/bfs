@@ -5,10 +5,10 @@ import './Stat.sol';
 pragma experimental ABIEncoderV2;
 
 contract File {
-    byte[] _data;
+    bytes _data;
     FileStat.stat public entry_stat;
 
-    function read() view public returns(byte[] memory){
+    function read() view public returns(bytes memory) {
         entry_stat.atime = now;
         return _data;
     }
@@ -36,7 +36,7 @@ contract File {
         return out;
     }
 
-    function write(byte[] memory data) public {
+    function write(bytes memory data) public {
         uint time = now;
         entry_stat.atime = time;
         entry_stat.mtime = time;
@@ -44,8 +44,8 @@ contract File {
         entry_stat.size = data.length;
     }
 
-    function write(byte[] memory data, uint off_t) public {
-        byte[] memory new_data = new byte[](data.length + off_t);
+    function write(bytes memory data, uint off_t) public {
+        bytes memory new_data = new bytes(data.length + off_t);
         for(uint i = 0; i < off_t; i++){
             new_data[i] = _data[i];
         }

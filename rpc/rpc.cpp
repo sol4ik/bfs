@@ -31,12 +31,13 @@ int Rpc::create_file(const std::string &path) {
     }
 }
 
-int Rpc::write_file(const std::string &path, const uint8_t *data, size_t length) {
-    static std::string func_signature{"write(string,bytes1[])"};
+int Rpc::write_file(const std::string &path, const std::string &data, size_t length) {
+    static std::string func_signature{"write(string,bytes)"};
     bytes bt{};
     for (int i = 0; i < length; i++)
         bt.emplace_back(data[i]);
-    auto json = form_json(eth_method::sendTx, func_signature, path, bt);
+    auto json = form_json(eth_method::sendTx, func_signature,
+                          path, data);
     try {
         return get_tx_status(process_json(eth_method::sendTx, curl.send_request(json)));
     } catch (const std::exception &e) {
@@ -46,14 +47,14 @@ int Rpc::write_file(const std::string &path, const uint8_t *data, size_t length)
 }
 
 
-int Rpc::write_file(const std::string &path, const uint8_t *data, size_t length, off_t offset) {
-    static std::string func_signature{"write1(string,bytes1[],uint256)"};
+int Rpc::write_file(const std::string &path, const std::string &data, size_t length, off_t offset) {
+    static std::string func_signature{"write(string,bytes,uint256)"};
     bytes bt{};
     std::cout << length << std::endl;
     for (int i = 0; i < length; i++)
         bt.emplace_back(data[i]);
-    auto json = form_json(eth_method::sendTx, func_signature, path, bt,
-                          static_cast<uint64_t>(offset));
+    auto json = form_json(eth_method::sendTx, func_signature, path,
+                          data, static_cast<uint64_t>(offset));
     std::cout << json << std::endl;
     try {
         return get_tx_status(process_json(eth_method::sendTx, curl.send_request(json)));
@@ -63,7 +64,7 @@ int Rpc::write_file(const std::string &path, const uint8_t *data, size_t length,
     }
 }
 
-int Rpc::read_file(const std::string &path, uint8_t *buf, size_t buf_size, off_t offset) {
+int Rpc::read_file(const std::string &path, char *buf, size_t buf_size, off_t offset) {
     static std::string func_signature{"read(string)"};
     auto json = form_json(eth_method::call, func_signature, path);
     try {
@@ -209,7 +210,7 @@ std::string Rpc::form_json(eth_method method, const std::string &func_sig, Args.
     if (method == eth_method::sendTx || method == eth_method::call) {
         params.put("from", to_string(fromAddr));
         params.put("to", to_string(memoryManagerAddress));
-        params.put("data", to_string(encode(func_sig, args...)));
+        params.put("data", main_encode(func_sig, args...));
     }
     if (method == eth_method::sendTx) {
         params.put("value", "0x0");
@@ -232,6 +233,7 @@ std::string Rpc::form_json(eth_method method, const std::string &func_sig, Args.
 
     std::stringstream ss;
     boost::property_tree::json_parser::write_json(ss, pt);
+    std::cout << ss.str() << std::endl;
     return ss.str();
 }
 
