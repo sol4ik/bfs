@@ -24,6 +24,7 @@ uint64_t decode_uint256(const std::string &str);
 
 std::string decode_string(const std::string &str);
 
+std::string decode_string1(const std::string & str);
 int decode_stat_struct(const std::string &str, struct stat *st);
 
 std::vector<std::string> decode_strings(const std::string &str);

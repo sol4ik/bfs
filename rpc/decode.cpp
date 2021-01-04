@@ -2,6 +2,7 @@
 #include "decode.h"
 #include <boost/locale.hpp>
 #include <sys/stat.h>
+#include <sstream>
 
 bytes from_hex(const std::string &str) {
     bytes res;
@@ -102,4 +103,27 @@ int decode_stat_struct(const std::string &str, struct stat *st) {
     st->st_ctime = values[11];
 
     return 0;
+}
+
+std::string decode_string1(const std::string &str) {
+    std::stringstream ss;
+    std::string main_content = str.substr(2 + 64, str.size() - 2 - 64);
+    ss <<  std::hex << main_content.substr(0, 64);
+    size_t chars_num;
+    ss >> chars_num;
+
+    std::string main_str(chars_num, '0');
+    main_content = main_content.substr(64);
+    for (size_t i = 0; i < chars_num; ++i) {
+        std::stringstream ss2;
+        std::string some_str(2, '0');
+        some_str[0] = main_content[2*i];
+        some_str[1] = main_content[2*i + 1];
+        std::cout << some_str << std::endl;
+        ss2 << std::hex << some_str;
+        size_t x;
+        ss2 >> x;
+        main_str[i] = static_cast<char>(x);
+    }
+    return main_str;
 }

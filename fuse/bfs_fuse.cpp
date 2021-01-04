@@ -21,9 +21,8 @@ int bfs_write(const char *path, const char *data, size_t size, off_t offset, str
     } else {
         int x = RPC->write_file(path, std::string(data, size), size,
                                 offset);
-        std::cout << x << std::endl;
         if (x)
-            return static_cast<int>(size - 1);
+            return size;
     }
 
     return 0;
@@ -265,6 +264,6 @@ int main(int argc, char *argv[]) {
 
 //    RPC = new Rpc{argv[3], argv[4]};
     RPC = new Rpc{"0x001F6044daa380e5C9dBbB0807AcE1EA9Cf3B10B",
-        "0xF239f04552720D17477685a9Ab988402E9BCaCA0"};
+        "0xF49a8d792D9A3B2644f947A3f23e64888688B3c3"};
     return fuse_main(argc, argv, &bfs_operations, nullptr);
 }

@@ -68,7 +68,7 @@ int Rpc::read_file(const std::string &path, char *buf, size_t buf_size, off_t of
     static std::string func_signature{"read(string)"};
     auto json = form_json(eth_method::call, func_signature, path);
     try {
-        auto res = decode_bytes(process_json(eth_method::call, curl.send_request(json)));
+        auto res = decode_string1(process_json(eth_method::call, curl.send_request(json)));
         memcpy(buf, res.data() + offset, std::min(buf_size, res.size() - offset));
         return std::min(buf_size, res.size() - offset);
     } catch (const std::exception &e) {
